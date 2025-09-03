@@ -29,36 +29,12 @@ Multi-Modal Skin Condition Classification with Medical Expert-Calibrated Confide
 | **Ruben Perez** | `rpere510@fiu.edu`, `rubenruben1521@gmail.com` | he/him | Needs clear vision; organized |
 | **Alexis Amadi** | `aamadi2@student.gsu.edu`, `alexisamadi22@gmail.com` | she/her | Values open, judgment-free idea sharing |
 
----
-
-## Psychological Safety
-### 🛠 Team Strengths
-| Name | Technical | Professional |
-|------|-----------|--------------|
-| Aisha | TensorFlow, Keras | Organized; beats deadlines |
-| Hoang | Pandas, NumPy | Collaboration, analytical |
-| Wanying | API calls | Flexible, communicative |
-| Ayleen | Pandas, C++, sklearn | Empathetic, adaptable |
-| Susan | Pandas, NumPy, sklearn | Curious, calm, open-minded |
-| Ruben | Python, Ultralytics | Organized, flexible |
-| Alexis | TF, sklearn suite | Collaborative, problem-solver |
-
-### 🌱 Atmosphere to Flourish
-- Prompt, friendly responses (memes welcome)  
-- Transparent about conflicts or missed deadlines  
-- Respect different knowledge levels; learn together  
-- Timely communication & constructive feedback  
 
 ### 🤗 Interpersonal Behaviors
 1. Keep teammates updated on task progress & blockers.  
 2. Listen actively; respect every voice.  
 3. Encourage diverse perspectives.  
 4. Cover for each other during heavy school/work weeks.
-
-### 🎉 Team Rituals
-- Start meetings with a quick ice-breaker chat.  
-- Express gratitude when someone helps.  
-- Share short personal updates to build empathy.
 
 ---
 
@@ -92,18 +68,6 @@ Multi-Modal Skin Condition Classification with Medical Expert-Calibrated Confide
 
 ---
 
-## Team Agreement Sign-off
-| Member | ✅ Ack | Date |
-|--------|-------|------|
-| Hoang Do | Y | 08-12-2025 |
-| Ruben Perez | Y | 08-12-2025 |
-| Wanying Xu | Y | 08-12-2025 |
-| Ayleen Jimenez | Y | 08-12-2025 |
-| Aisha Salimgereyeva | Y | 08-12-2025 |
-| Susan Qu | Y | 08-12-2025 |
-| Alexis Amadi | Y | 08-12-2025 |
-
----
 
 ## Project Links & Milestones
 | Resource | Link |
@@ -125,8 +89,6 @@ Multi-Modal Skin Condition Classification with Medical Expert-Calibrated Confide
 | Deploy Web Demo / API [#13] | 11-15 | — |
 | Final Bias & Performance Report [#14] | 11-22 | — |
 | Final Presentation Prep [#15] | 11-30 | — |
-
-> *Replace “—” with assignees and keep status check-boxes up to date.*
 
 ---
 
