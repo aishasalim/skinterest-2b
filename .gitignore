@@ -1,12 +1,71 @@
-# Python Virtual Environment
+# .gitignore (add this at repo root)
+cat > .gitignore << 'EOF'
+# --- Virtual envs ---
 .venv/
+venv/
+env/
 
-# Large Model Files
-*.keras
-
-# Python cache
+# --- Python junk ---
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.log
 
-# macOS
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- OS & IDE ---
 .DS_Store
+.vscode/
+.idea/
+
+# --- Data & heavy artifacts ---
+data/raw/
+data/private/
+data/cache/
+*.tfrecord
+*.h5
+*.hdf5
+*.keras
+*.ckpt
+*.ckpt.*
+*.pb
+*.onnx
+*.pth
+*.pt
+*.npz
+
+# --- Experiments: keep figures & CSV/JSON, ignore weights/checkpoints ---
+experiments/**/checkpoints/
+experiments/**/weights/
+experiments/**/runs/
+wandb/
+.tensorboard/
+logs/
+EOF
+
+# stop tracking already-added venv
+git rm -r --cached .venv 2>/dev/null || true
+git add .gitignore
+git commit -m "chore: ignore venv and heavy artifacts"
+git push
+
+# venvs
+.venv/
+venv/
+env/
+# caches
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+# heavy ML artifacts
+*.keras
+*.h5
+*.ckpt*
+*.tfrecord
+*.onnx
+*.pt
+*.pth
+logs/
+wandb/

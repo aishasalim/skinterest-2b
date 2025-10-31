@@ -35,22 +35,48 @@
 
 ```
 .
-├── app.py                      # Streamlit demo
+├── app.py
+├── README.md
+├── requirements.txt
+├── .gitignore
+├── configs/
+│   └── resnet152v2_baseline.yaml
+├── experiments/                 # one subfolder per run (small text+png only)
+│   └── resnet152v2_aisha_baseline_v1/
+│       ├── report.json
+│       ├── metrics.csv          # optional (history)
+│       ├── weights.txt          # link/command to download .keras
+│       └── figures/             # optional PNGs (cm, grad-cam, etc.)
 ├── notebooks/
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_training_multitask.ipynb        # Colab/Notebook training
-│   └── 03_error_analysis_fairness.ipynb
-├── src/
-│   ├── data_prep.py            # meta/ITA, splits, loaders
-│   ├── model_multitask.py      # CCM + backbone + heads
-│   ├── train.py                # CLI training (mirrors notebook)
-│   └── eval.py                 # metrics, confusion matrix, Grad-CAM
-├── artifacts/
-│   └── resnet152v2_full_model.keras   # saved demo model (example path)
-├── data/
-│   └── sample_images/          # small test images for the demo
-└── docs/
-    └── figures/                # confusion matrices, PR curves, etc.
+│   └── aisha/
+│       ├── 01_eda_scins_kaggle.ipynb
+│       ├── 02_training_multitask_resnet152v2.ipynb
+│       └── 03_error_analysis_fairness.ipynb
+├── scripts/
+│   ├── prepare_kaggle_meta.py   # builds meta CSV with labels, lighting, ITA
+│   └── train_abc.py             # trains Phase A/B/C from config
+└── src/
+    ├── __init__.py
+    ├── data/
+    │   ├── __init__.py
+    │   ├── datasets.py          # tf.data pipeline, balance helpers
+    │   └── meta_utils.py        # lighting/ITA functions (+ simple skin mask)
+    ├── layers/
+    │   ├── __init__.py
+    │   └── color_calibration.py # ColorCalibration + ResNetV2Preprocess
+    ├── models/
+    │   ├── __init__.py
+    │   └── multitask.py         # build_multitask()
+    ├── training/
+    │   ├── __init__.py
+    │   └── abc.py               # compile_with(), run_phases()
+    ├── eval/
+    │   ├── __init__.py
+    │   └── evaluate.py          # test metrics + report.json writer
+    └── utils/
+        ├── __init__.py
+        └── experiment.py        # create_run_dir(), save_report(), save_history()
+
 ```
 
 ### A) One-click (Google Colab)
