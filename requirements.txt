@@ -1,0 +1,6 @@
+streamlit
+pillow
+numpy
+tensorflow-macos==2.17.0
+tensorflow-metal==1.1.0
+

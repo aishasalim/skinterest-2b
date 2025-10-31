@@ -1,0 +1,12 @@
+# Python Virtual Environment
+.venv/
+
+# Large Model Files
+*.keras
+
+# Python cache
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
