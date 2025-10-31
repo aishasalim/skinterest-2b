@@ -1,0 +1,8 @@
+img_size: [224, 224]
+center_crop_frac: 0.6
+batch: 32
+dropout: 0.35
+ccm_reg: 0.0001
+balance_mode: undertone_x_tone
+upsample_cap: null # or number
+epochs_abc: [4, 3, 8]

@@ -69,3 +69,21 @@ __pycache__/
 *.pth
 logs/
 wandb/
+
+# envs
+.venv/
+venv/
+env/
+# caches
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+# weights & big ML artifacts
+*.keras
+*.h5
+*.ckpt*
+*.tfrecord
+logs/
+wandb/
+# optional local-only bucket
+weights_local/
