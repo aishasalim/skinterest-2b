@@ -65,7 +65,9 @@ MERGED12_R_IMG   = (224, 224)         # ResNet50V2 branch + EffNetB0 branch
 
 def _gdrive_download_from_id(file_id: str, dest_path: str, chunk_size: int = 1 << 20):
     """
-    Google Drive downloader that handles large files (virus-scan warning).
+    Google Drive downloader that handles:
+      - 'Too large to scan for viruses' HTML page
+      - direct drive.usercontent.google.com download link.
     File must be shared as 'Anyone with the link'.
     """
     URL = "https://docs.google.com/uc?export=download"
@@ -75,34 +77,46 @@ def _gdrive_download_from_id(file_id: str, dest_path: str, chunk_size: int = 1 <
     resp = session.get(URL, params={"id": file_id}, stream=True)
     resp.raise_for_status()
 
-    token = None
+    content_type = resp.headers.get("Content-Type", "").lower()
 
-    # a) Old-style: token in cookies
-    for key, value in resp.cookies.items():
-        if key.startswith("download_warning"):
-            token = value
-            break
+    # If we got the HTML warning page, it will be text/html
+    if "text/html" in content_type:
+        text = resp.text
 
-    # b) New-style: token appears in HTML of the warning page
-    if token is None:
-        try:
-            text = resp.text  # only small HTML, fine to read
-            m = re.search(r"confirm=([0-9A-Za-z_]+)", text)
-            if m:
-                token = m.group(1)
-        except Exception:
-            pass
+        # a) New-style: direct drive.usercontent link in the "Download anyway" button
+        m = re.search(r'href="(https://drive\.usercontent\.google\.com/[^"]+)"', text)
+        if m:
+            download_url = m.group(1)
+            resp = session.get(download_url, stream=True)
+            resp.raise_for_status()
+        else:
+            # b) Fallback: look for a confirm token
+            token = None
+            cookie_token = next(
+                (v for k, v in resp.cookies.items() if k.startswith("download_warning")),
+                None,
+            )
+            token = cookie_token
 
-    # ---- 2) If we have a token, make second request with confirm= ----
-    if token is not None:
-        resp = session.get(
-            URL,
-            params={"id": file_id, "confirm": token},
-            stream=True,
-        )
-        resp.raise_for_status()
+            if token is None:
+                m2 = re.search(r"confirm=([0-9A-Za-z_]+)", text)
+                if m2:
+                    token = m2.group(1)
 
-    # ---- 3) Stream final response (either small file or large model) ----
+            if token is not None:
+                resp = session.get(
+                    URL,
+                    params={"id": file_id, "confirm": token},
+                    stream=True,
+                )
+                resp.raise_for_status()
+            else:
+                # Couldn't find a token or a direct link
+                raise RuntimeError(
+                    f"[weights][ERROR] Could not extract download link for file id {file_id}."
+                )
+
+    # ---- 2) Stream final response (binary) to disk ----
     with open(dest_path, "wb") as f:
         for chunk in resp.iter_content(chunk_size=chunk_size):
             if chunk:
@@ -112,37 +126,41 @@ def _gdrive_download_from_id(file_id: str, dest_path: str, chunk_size: int = 1 <
 def ensure_weights_present():
     """
     Ensure all weight files exist in weights_local/.
-    Download from Google Drive if missing.
+    Download from Google Drive if missing or if an existing .keras file
+    is clearly corrupted (tiny HTML page).
     """
     for fname, file_id in GDRIVE_FILES.items():
         local_path = os.path.join(WEIGHTS_DIR, fname)
-        if os.path.exists(local_path) and os.path.getsize(local_path) > 0:
-            size = os.path.getsize(local_path)
+        size = os.path.getsize(local_path) if os.path.exists(local_path) else 0
+
+        # If file already exists
+        if size > 0:
             print(f"[weights] {fname} already present ({size} bytes)")
-            continue  # already here
-        
-        if fname.endswith(".keras") and size < 1_000_000:  # < ~1MB
-            raise RuntimeError(
-                f"[weights][ERROR] {fname} is only {size} bytes. "
-                "This looks like an HTML error page. "
-                "Double-check the Google Drive file ID and sharing settings."
-            )
 
+            # If it's a model file but suspiciously tiny, delete & redownload
+            if fname.endswith(".keras") and size < 1_000_000:  # < ~1 MB
+                print(
+                    f"[weights][WARN] {fname} is only {size} bytes; "
+                    "this is probably an HTML error page. Deleting and re-downloading."
+                )
+                os.remove(local_path)
+                size = 0
+            else:
+                # looks fine -> skip
+                continue
 
+        # If we reach here, file is missing or was deleted -> download
         print(f"[weights] Downloading {fname}...")
         _gdrive_download_from_id(file_id, local_path)
         size = os.path.getsize(local_path)
         print(f"[weights] Saved to {local_path} ({size} bytes)")
 
         # sanity check: model files should not be tiny
-        if fname.endswith(".keras") and size < 1_000_000:  # < ~1MB
+        if fname.endswith(".keras") and size < 1_000_000:
             raise RuntimeError(
-                f"[weights][ERROR] {fname} is only {size} bytes. "
-                "This looks like an HTML error page. "
+                f"[weights][ERROR] {fname} is only {size} bytes even after re-download. "
                 "Double-check the Google Drive file ID and sharing settings."
             )
-
-
 
 # -----------------------------
 # 1) Custom layers for Kaggle model
