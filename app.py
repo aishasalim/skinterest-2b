@@ -16,6 +16,7 @@ from tensorflow.keras import layers
 from tensorflow.keras.applications import resnet50  
 import requests   
 import os
+import re
 
 WEIGHTS_DIR = "weights_local"
 os.makedirs(WEIGHTS_DIR, exist_ok=True)
@@ -64,34 +65,46 @@ MERGED12_R_IMG   = (224, 224)         # ResNet50V2 branch + EffNetB0 branch
 
 def _gdrive_download_from_id(file_id: str, dest_path: str, chunk_size: int = 1 << 20):
     """
-    Google Drive downloader that handles large files (confirm token).
+    Google Drive downloader that handles large files (virus-scan warning).
     File must be shared as 'Anyone with the link'.
     """
     URL = "https://docs.google.com/uc?export=download"
     session = requests.Session()
 
-    # 1) First request — may get a warning cookie for large files
-    response = session.get(URL, params={"id": file_id}, stream=True)
-    response.raise_for_status()
+    # ---- 1) First request ----
+    resp = session.get(URL, params={"id": file_id}, stream=True)
+    resp.raise_for_status()
 
     token = None
-    for key, value in response.cookies.items():
+
+    # a) Old-style: token in cookies
+    for key, value in resp.cookies.items():
         if key.startswith("download_warning"):
             token = value
             break
 
-    # 2) If we got a token, send a second request with confirm=
+    # b) New-style: token appears in HTML of the warning page
+    if token is None:
+        try:
+            text = resp.text  # only small HTML, fine to read
+            m = re.search(r"confirm=([0-9A-Za-z_]+)", text)
+            if m:
+                token = m.group(1)
+        except Exception:
+            pass
+
+    # ---- 2) If we have a token, make second request with confirm= ----
     if token is not None:
-        response = session.get(
+        resp = session.get(
             URL,
             params={"id": file_id, "confirm": token},
             stream=True,
         )
-        response.raise_for_status()
+        resp.raise_for_status()
 
-    # 3) Stream to disk
+    # ---- 3) Stream final response (either small file or large model) ----
     with open(dest_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=chunk_size):
+        for chunk in resp.iter_content(chunk_size=chunk_size):
             if chunk:
                 f.write(chunk)
 
@@ -107,6 +120,14 @@ def ensure_weights_present():
             size = os.path.getsize(local_path)
             print(f"[weights] {fname} already present ({size} bytes)")
             continue  # already here
+        
+        if fname.endswith(".keras") and size < 1_000_000:  # < ~1MB
+            raise RuntimeError(
+                f"[weights][ERROR] {fname} is only {size} bytes. "
+                "This looks like an HTML error page. "
+                "Double-check the Google Drive file ID and sharing settings."
+            )
+
 
         print(f"[weights] Downloading {fname}...")
         _gdrive_download_from_id(file_id, local_path)
