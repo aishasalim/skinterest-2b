@@ -65,60 +65,86 @@ MERGED12_R_IMG   = (224, 224)         # ResNet50V2 branch + EffNetB0 branch
 
 def _gdrive_download_from_id(file_id: str, dest_path: str, chunk_size: int = 1 << 20):
     """
-    Google Drive downloader that handles:
-      - 'Too large to scan for viruses' HTML page
-      - direct drive.usercontent.google.com download link.
-    File must be shared as 'Anyone with the link'.
+    Robust Google Drive downloader.
+
+    Strategy:
+    1) Hit docs.google.com/uc?export=download&id=<file_id>.
+        - If it's already binary (not text/html), stream to disk.
+        - If it's HTML (virus-scan / warning / access page), parse all href="...".
+    2) From the HTML, find any link that:
+         - contains the file_id
+         - and 'export=download'
+       and follow that link.
+    3) Stream the final binary response to dest_path.
+
+    File must be shared as 'Anyone with the link' (no login / cookies in this env).
     """
-    URL = "https://docs.google.com/uc?export=download"
+    import html
+
+    URL = "https://docs.google.com/uc"
     session = requests.Session()
 
     # ---- 1) First request ----
-    resp = session.get(URL, params={"id": file_id}, stream=True)
+    resp = session.get(URL, params={"export": "download", "id": file_id}, stream=True)
     resp.raise_for_status()
 
     content_type = resp.headers.get("Content-Type", "").lower()
 
-    # If we got the HTML warning page, it will be text/html
-    if "text/html" in content_type:
-        text = resp.text
+    # If it's already not HTML, just stream it (small files, or already-confirmed)
+    if "text/html" not in content_type:
+        with open(dest_path, "wb") as f:
+            for chunk in resp.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+        return
 
-        # a) New-style: direct drive.usercontent link in the "Download anyway" button
-        m = re.search(r'href="(https://drive\.usercontent\.google\.com/[^"]+)"', text)
-        if m:
-            download_url = m.group(1)
-            resp = session.get(download_url, stream=True)
-            resp.raise_for_status()
-        else:
-            # b) Fallback: look for a confirm token
-            token = None
-            cookie_token = next(
-                (v for k, v in resp.cookies.items() if k.startswith("download_warning")),
-                None,
-            )
-            token = cookie_token
+    # ---- 2) We got HTML (virus-scan page / warning) -> parse links ----
+    text = resp.text
 
-            if token is None:
-                m2 = re.search(r"confirm=([0-9A-Za-z_]+)", text)
-                if m2:
-                    token = m2.group(1)
+    # Find all href="...".
+    hrefs = re.findall(r'href="([^"]+)"', text)
 
-            if token is not None:
-                resp = session.get(
-                    URL,
-                    params={"id": file_id, "confirm": token},
-                    stream=True,
-                )
-                resp.raise_for_status()
-            else:
-                # Couldn't find a token or a direct link
-                raise RuntimeError(
-                    f"[weights][ERROR] Could not extract download link for file id {file_id}."
-                )
+    download_url = None
+    for href in hrefs:
+        unescaped = html.unescape(href)
+        # We accept either docs.google.com or drive.usercontent.google.com links,
+        # as long as they look like a download for this file.
+        if "export=download" in unescaped and file_id in unescaped:
+            download_url = unescaped
+            break
 
-    # ---- 2) Stream final response (binary) to disk ----
+    if download_url is None:
+        # Sometimes the link can be relative; second pass for '/uc?export=download...'
+        for href in hrefs:
+            unescaped = html.unescape(href)
+            if "export=download" in unescaped and "id=" in unescaped and file_id in unescaped:
+                if unescaped.startswith("/"):
+                    download_url = "https://docs.google.com" + unescaped
+                else:
+                    download_url = "https://docs.google.com" + "/" + unescaped.lstrip("/")
+                break
+
+    if download_url is None:
+        raise RuntimeError(
+            f"[weights][ERROR] Could not extract download link for file id {file_id}."
+        )
+
+    # ---- 3) Follow the extracted download URL ----
+    # (may be docs.google.com or drive.usercontent.google.com)
+    resp2 = session.get(download_url, stream=True)
+    resp2.raise_for_status()
+
+    # If this is still HTML, it's likely a permission/“You need access” page.
+    ct2 = resp2.headers.get("Content-Type", "").lower()
+    if "text/html" in ct2:
+        raise RuntimeError(
+            f"[weights][ERROR] Download link for file id {file_id} still returns HTML. "
+            "This usually means the file is not shared as 'Anyone with the link'."
+        )
+
+    # Stream binary to disk
     with open(dest_path, "wb") as f:
-        for chunk in resp.iter_content(chunk_size=chunk_size):
+        for chunk in resp2.iter_content(chunk_size=chunk_size):
             if chunk:
                 f.write(chunk)
 
