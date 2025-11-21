@@ -14,3 +14,4 @@ pyyaml>=6.0
 pillow>=10.0
 streamlit>=1.36
 requests>=2.31
+huggingface_hub>=0.24

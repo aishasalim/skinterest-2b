@@ -15,26 +15,23 @@ from keras.models import load_model
 from tensorflow.keras import layers
 from tensorflow.keras.applications import resnet50  
 import requests   
-import os
-import re
 
-WEIGHTS_DIR = "weights_local"
-os.makedirs(WEIGHTS_DIR, exist_ok=True)
+from huggingface_hub import hf_hub_download
+
+HF_REPO = "aishasalimg/skinterest-weights"
+
+KAGGLE_MODEL_PATH = hf_hub_download(HF_REPO, "kaggle_classifier_model.keras")
+MERGED12_XCEPTION_PATH = hf_hub_download(HF_REPO, "merged12_xception_finetuned.keras")
+MERGED12_RESNET_PATH   = hf_hub_download(HF_REPO, "merged12_resnet50v2_finetuned.keras")
+MERGED12_EFFNET_CUSTOM_PATH = hf_hub_download(HF_REPO, "merged12_effnet_custom_finetuned.keras")
+UNDERTONE_MODEL_PATH   = hf_hub_download(HF_REPO, "undertone_classifier_model.keras")
+
+KAGGLE_LABELS_PATH     = hf_hub_download(HF_REPO, "kaggle_label_classes.npy")
+MERGED12_LABELS_PATH   = hf_hub_download(HF_REPO, "merged12_label_classes.npy")
 
 # -----------------------------
 # 0) Paths & image sizes
 # -----------------------------
-
-# Google Drive *file IDs* (NOT folder URL)
-GDRIVE_FILES = { 
-    "kaggle_classifier_model.keras": "1QyK-mwjCw30g1gINNnn5srQiz4kEPZt3", 
-    "merged12_xception_finetuned.keras": "1CL06tnH4X8ogJ1NXxx2wrRh1avX_ac9s", 
-    "merged12_resnet50v2_finetuned.keras":"12Q9jz4Nkg_sgDdBLo3WptC1M-aV7R4Z8", 
-    "merged12_effnet_custom_finetuned.keras": "1SvThqmZpa34bEG0byX8bIEtL3TOkqwDU", 
-    "undertone_classifier_model.keras": "19g4Yxw8UbmUkrzqDrIj8RhjHzba7-ht5", 
-    "kaggle_label_classes.npy": "1niHVRZDezHX0ssxt2eFdoYKfn1UyOHbS", 
-    "merged12_label_classes.npy": "115FixjBHgp9LylFwMlGWSumVEAwdielc", 
-}
 
 # --- Paths (edit if your files are elsewhere) ---
 KAGGLE_MODEL_PATH      = "weights_local/kaggle_classifier_model.keras"
@@ -62,131 +59,6 @@ KAGGLE_IMG_SIZE  = (224, 224)         # Kaggle 10
 MERGED12_X_IMG   = (299, 299)         # Xception branch
 MERGED12_R_IMG   = (224, 224)         # ResNet50V2 branch + EffNetB0 branch
 
-
-def _gdrive_download_from_id(file_id: str, dest_path: str, chunk_size: int = 1 << 20):
-    """
-    Robust Google Drive downloader.
-
-    Strategy:
-    1) Hit docs.google.com/uc?export=download&id=<file_id>.
-        - If it's already binary (not text/html), stream to disk.
-        - If it's HTML (virus-scan / warning / access page), parse all href="...".
-    2) From the HTML, find any link that:
-         - contains the file_id
-         - and 'export=download'
-       and follow that link.
-    3) Stream the final binary response to dest_path.
-
-    File must be shared as 'Anyone with the link' (no login / cookies in this env).
-    """
-    import html
-
-    URL = "https://docs.google.com/uc"
-    session = requests.Session()
-
-    # ---- 1) First request ----
-    resp = session.get(URL, params={"export": "download", "id": file_id}, stream=True)
-    resp.raise_for_status()
-
-    content_type = resp.headers.get("Content-Type", "").lower()
-
-    # If it's already not HTML, just stream it (small files, or already-confirmed)
-    if "text/html" not in content_type:
-        with open(dest_path, "wb") as f:
-            for chunk in resp.iter_content(chunk_size=chunk_size):
-                if chunk:
-                    f.write(chunk)
-        return
-
-    # ---- 2) We got HTML (virus-scan page / warning) -> parse links ----
-    text = resp.text
-
-    # Find all href="...".
-    hrefs = re.findall(r'href="([^"]+)"', text)
-
-    download_url = None
-    for href in hrefs:
-        unescaped = html.unescape(href)
-        # We accept either docs.google.com or drive.usercontent.google.com links,
-        # as long as they look like a download for this file.
-        if "export=download" in unescaped and file_id in unescaped:
-            download_url = unescaped
-            break
-
-    if download_url is None:
-        # Sometimes the link can be relative; second pass for '/uc?export=download...'
-        for href in hrefs:
-            unescaped = html.unescape(href)
-            if "export=download" in unescaped and "id=" in unescaped and file_id in unescaped:
-                if unescaped.startswith("/"):
-                    download_url = "https://docs.google.com" + unescaped
-                else:
-                    download_url = "https://docs.google.com" + "/" + unescaped.lstrip("/")
-                break
-
-    if download_url is None:
-        raise RuntimeError(
-            f"[weights][ERROR] Could not extract download link for file id {file_id}."
-        )
-
-    # ---- 3) Follow the extracted download URL ----
-    # (may be docs.google.com or drive.usercontent.google.com)
-    resp2 = session.get(download_url, stream=True)
-    resp2.raise_for_status()
-
-    # If this is still HTML, it's likely a permission/“You need access” page.
-    ct2 = resp2.headers.get("Content-Type", "").lower()
-    if "text/html" in ct2:
-        raise RuntimeError(
-            f"[weights][ERROR] Download link for file id {file_id} still returns HTML. "
-            "This usually means the file is not shared as 'Anyone with the link'."
-        )
-
-    # Stream binary to disk
-    with open(dest_path, "wb") as f:
-        for chunk in resp2.iter_content(chunk_size=chunk_size):
-            if chunk:
-                f.write(chunk)
-
-
-def ensure_weights_present():
-    """
-    Ensure all weight files exist in weights_local/.
-    Download from Google Drive if missing or if an existing .keras file
-    is clearly corrupted (tiny HTML page).
-    """
-    for fname, file_id in GDRIVE_FILES.items():
-        local_path = os.path.join(WEIGHTS_DIR, fname)
-        size = os.path.getsize(local_path) if os.path.exists(local_path) else 0
-
-        # If file already exists
-        if size > 0:
-            print(f"[weights] {fname} already present ({size} bytes)")
-
-            # If it's a model file but suspiciously tiny, delete & redownload
-            if fname.endswith(".keras") and size < 1_000_000:  # < ~1 MB
-                print(
-                    f"[weights][WARN] {fname} is only {size} bytes; "
-                    "this is probably an HTML error page. Deleting and re-downloading."
-                )
-                os.remove(local_path)
-                size = 0
-            else:
-                # looks fine -> skip
-                continue
-
-        # If we reach here, file is missing or was deleted -> download
-        print(f"[weights] Downloading {fname}...")
-        _gdrive_download_from_id(file_id, local_path)
-        size = os.path.getsize(local_path)
-        print(f"[weights] Saved to {local_path} ({size} bytes)")
-
-        # sanity check: model files should not be tiny
-        if fname.endswith(".keras") and size < 1_000_000:
-            raise RuntimeError(
-                f"[weights][ERROR] {fname} is only {size} bytes even after re-download. "
-                "Double-check the Google Drive file ID and sharing settings."
-            )
 
 # -----------------------------
 # 1) Custom layers for Kaggle model
