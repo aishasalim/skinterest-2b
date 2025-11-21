@@ -14,41 +14,22 @@ import tensorflow as tf
 from keras.models import load_model
 from tensorflow.keras import layers
 from tensorflow.keras.applications import resnet50  
-import requests   
+
 
 from huggingface_hub import hf_hub_download
 
-HF_REPO = "aishasalimg/skinterest-weights"
 
-KAGGLE_MODEL_PATH = hf_hub_download(HF_REPO, "kaggle_classifier_model.keras")
-MERGED12_XCEPTION_PATH = hf_hub_download(HF_REPO, "merged12_xception_finetuned.keras")
-MERGED12_RESNET_PATH   = hf_hub_download(HF_REPO, "merged12_resnet50v2_finetuned.keras")
+HF_REPO = "aishasalimg/skinterest-weights"  # make sure this matches your HF repo
+
+# Download / resolve all weights from HuggingFace HUB cache
+KAGGLE_MODEL_PATH          = hf_hub_download(HF_REPO, "kaggle_classifier_model.keras")
+MERGED12_XCEPTION_PATH     = hf_hub_download(HF_REPO, "merged12_xception_finetuned.keras")
+MERGED12_RESNET_PATH       = hf_hub_download(HF_REPO, "merged12_resnet50v2_finetuned.keras")
 MERGED12_EFFNET_CUSTOM_PATH = hf_hub_download(HF_REPO, "merged12_effnet_custom_finetuned.keras")
-UNDERTONE_MODEL_PATH   = hf_hub_download(HF_REPO, "undertone_classifier_model.keras")
+UNDERTONE_MODEL_PATH       = hf_hub_download(HF_REPO, "undertone_classifier_model.keras")
 
-KAGGLE_LABELS_PATH     = hf_hub_download(HF_REPO, "kaggle_label_classes.npy")
-MERGED12_LABELS_PATH   = hf_hub_download(HF_REPO, "merged12_label_classes.npy")
-
-# -----------------------------
-# 0) Paths & image sizes
-# -----------------------------
-
-# --- Paths (edit if your files are elsewhere) ---
-KAGGLE_MODEL_PATH      = "weights_local/kaggle_classifier_model.keras"
-KAGGLE_LABELS_PATH     = "weights_local/kaggle_label_classes.npy"
-
-# Merged-12 ensemble parts + labels
-MERGED12_XCEPTION_PATH = "weights_local/merged12_xception_finetuned.keras"
-MERGED12_RESNET_PATH   = "weights_local/merged12_resnet50v2_finetuned.keras"
-
-# EfficientNet+CustomCNN 12-class model (finetuned)
-MERGED12_EFFNET_CUSTOM_PATH = "weights_local/merged12_effnet_custom_finetuned.keras"
-
-# Lighting + undertone model
-UNDERTONE_MODEL_PATH   = "weights_local/undertone_classifier_model.keras"
-
-# Canonical 12-class labels
-MERGED12_LABELS_PATH   = "weights_local/merged12_label_classes.npy"
+KAGGLE_LABELS_PATH         = hf_hub_download(HF_REPO, "kaggle_label_classes.npy")
+MERGED12_LABELS_PATH       = hf_hub_download(HF_REPO, "merged12_label_classes.npy")
 
 # Labels for lighting / undertone heads
 LIGHTING_LABELS  = ["good", "poor_contrast", "overexposed"]  # adjust to your training labels
@@ -58,7 +39,6 @@ UNDERTONE_LABELS = ["cool", "neutral", "warm"]
 KAGGLE_IMG_SIZE  = (224, 224)         # Kaggle 10
 MERGED12_X_IMG   = (299, 299)         # Xception branch
 MERGED12_R_IMG   = (224, 224)         # ResNet50V2 branch + EffNetB0 branch
-
 
 # -----------------------------
 # 1) Custom layers for Kaggle model
@@ -150,7 +130,6 @@ def load_models_and_labels():
     )
 
 
-ensure_weights_present()
 (
     kaggle_model,
     merged12_x, merged12_r,
