@@ -263,6 +263,8 @@ def run_lighting_undertone_model(pil_img: Image.Image):
     Returns:
       lighting_label, lighting_prob,
       undertone_label, undertone_prob
+
+    Robust to mismatch between model output dimension and LIGHTING_LABELS / UNDERTONE_LABELS.
     """
     arr = preprocess_for_undertone_model(pil_img)
     batch = np.expand_dims(arr, 0)
@@ -273,13 +275,28 @@ def run_lighting_undertone_model(pil_img: Image.Image):
     lighting_probs  = lighting_probs[0]
     undertone_probs = undertone_probs[0]
 
+    # --- figure out how many classes each head has ---
+    n_light = int(lighting_probs.shape[-1])
+    n_under = int(undertone_probs.shape[-1])
+
+    # If your hard-coded label list length doesn't match, fall back to generic class names
+    if len(LIGHTING_LABELS) == n_light:
+        light_labels = LIGHTING_LABELS
+    else:
+        light_labels = [f"lighting_class_{i}" for i in range(n_light)]
+
+    if len(UNDERTONE_LABELS) == n_under:
+        undert_labels = UNDERTONE_LABELS
+    else:
+        undert_labels = [f"undertone_class_{i}" for i in range(n_under)]
+
     light_idx   = int(np.argmax(lighting_probs))
     undert_idx  = int(np.argmax(undertone_probs))
 
-    light_label   = LIGHTING_LABELS[light_idx]
+    light_label   = light_labels[light_idx]
     light_prob    = float(lighting_probs[light_idx])
 
-    undert_label  = UNDERTONE_LABELS[undert_idx]
+    undert_label  = undert_labels[undert_idx]
     undert_prob   = float(undertone_probs[undert_idx])
 
     return light_label, light_prob, undert_label, undert_prob
@@ -308,7 +325,6 @@ if uploaded is not None:
         pil_img,
         caption="Uploaded image",
         width=420,
-        use_container_width=False,
     )
 
     with st.spinner("Running models…"):
