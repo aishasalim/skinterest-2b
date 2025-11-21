@@ -64,16 +64,37 @@ MERGED12_R_IMG   = (224, 224)         # ResNet50V2 branch + EffNetB0 branch
 
 def _gdrive_download_from_id(file_id: str, dest_path: str, chunk_size: int = 1 << 20):
     """
-    Minimal Google Drive downloader.
-    Works if the file is shared as 'Anyone with the link'.
+    Google Drive downloader that handles large files (confirm token).
+    File must be shared as 'Anyone with the link'.
     """
-    url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(dest_path, "wb") as f:
-            for chunk in r.iter_content(chunk_size=chunk_size):
-                if chunk:
-                    f.write(chunk)
+    URL = "https://docs.google.com/uc?export=download"
+    session = requests.Session()
+
+    # 1) First request — may get a warning cookie for large files
+    response = session.get(URL, params={"id": file_id}, stream=True)
+    response.raise_for_status()
+
+    token = None
+    for key, value in response.cookies.items():
+        if key.startswith("download_warning"):
+            token = value
+            break
+
+    # 2) If we got a token, send a second request with confirm=
+    if token is not None:
+        response = session.get(
+            URL,
+            params={"id": file_id, "confirm": token},
+            stream=True,
+        )
+        response.raise_for_status()
+
+    # 3) Stream to disk
+    with open(dest_path, "wb") as f:
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            if chunk:
+                f.write(chunk)
+
 
 def ensure_weights_present():
     """
@@ -83,14 +104,14 @@ def ensure_weights_present():
     for fname, file_id in GDRIVE_FILES.items():
         local_path = os.path.join(WEIGHTS_DIR, fname)
         if os.path.exists(local_path) and os.path.getsize(local_path) > 0:
+            print(f"[weights] {fname} already present ({os.path.getsize(local_path)} bytes)")
             continue  # already here
 
         print(f"[weights] Downloading {fname}...")
         _gdrive_download_from_id(file_id, local_path)
-        print(f"[weights] Saved to {local_path}")
+        size = os.path.getsize(local_path)
+        print(f"[weights] Saved to {local_path} ({size} bytes)")
 
-# Run this before loading any models
-ensure_weights_present()
 
 
 # -----------------------------
@@ -182,6 +203,8 @@ def load_models_and_labels():
         KAGGLE_SCIN_KEYWORDS,
     )
 
+
+ensure_weights_present()
 (
     kaggle_model,
     merged12_x, merged12_r,
