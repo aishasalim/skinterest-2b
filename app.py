@@ -104,13 +104,22 @@ def ensure_weights_present():
     for fname, file_id in GDRIVE_FILES.items():
         local_path = os.path.join(WEIGHTS_DIR, fname)
         if os.path.exists(local_path) and os.path.getsize(local_path) > 0:
-            print(f"[weights] {fname} already present ({os.path.getsize(local_path)} bytes)")
+            size = os.path.getsize(local_path)
+            print(f"[weights] {fname} already present ({size} bytes)")
             continue  # already here
 
         print(f"[weights] Downloading {fname}...")
         _gdrive_download_from_id(file_id, local_path)
         size = os.path.getsize(local_path)
         print(f"[weights] Saved to {local_path} ({size} bytes)")
+
+        # sanity check: model files should not be tiny
+        if fname.endswith(".keras") and size < 1_000_000:  # < ~1MB
+            raise RuntimeError(
+                f"[weights][ERROR] {fname} is only {size} bytes. "
+                "This looks like an HTML error page. "
+                "Double-check the Google Drive file ID and sharing settings."
+            )
 
 
 
