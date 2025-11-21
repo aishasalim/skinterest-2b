@@ -13,11 +13,27 @@ from PIL import Image
 import tensorflow as tf
 from keras.models import load_model
 from tensorflow.keras import layers
-from tensorflow.keras.applications import resnet50   # <-- needed for undertone model
+from tensorflow.keras.applications import resnet50  
+import requests   
+import os
+
+WEIGHTS_DIR = "weights_local"
+os.makedirs(WEIGHTS_DIR, exist_ok=True)
 
 # -----------------------------
 # 0) Paths & image sizes
 # -----------------------------
+
+# Google Drive *file IDs* (NOT folder URL)
+GDRIVE_FILES = { 
+    "kaggle_classifier_model.keras": "1QyK-mwjCw30g1gINNnn5srQiz4kEPZt3", 
+    "merged12_xception_finetuned.keras": "1CL06tnH4X8ogJ1NXxx2wrRh1avX_ac9s", 
+    "merged12_resnet50v2_finetuned.keras":"12Q9jz4Nkg_sgDdBLo3WptC1M-aV7R4Z8", 
+    "merged12_effnet_custom_finetuned.keras": "1SvThqmZpa34bEG0byX8bIEtL3TOkqwDU", 
+    "undertone_classifier_model.keras": "19g4Yxw8UbmUkrzqDrIj8RhjHzba7-ht5", 
+    "kaggle_label_classes.npy": "1niHVRZDezHX0ssxt2eFdoYKfn1UyOHbS", 
+    "merged12_label_classes.npy": "115FixjBHgp9LylFwMlGWSumVEAwdielc", 
+}
 
 # --- Paths (edit if your files are elsewhere) ---
 KAGGLE_MODEL_PATH      = "weights_local/kaggle_classifier_model.keras"
@@ -44,6 +60,38 @@ UNDERTONE_LABELS = ["cool", "neutral", "warm"]
 KAGGLE_IMG_SIZE  = (224, 224)         # Kaggle 10
 MERGED12_X_IMG   = (299, 299)         # Xception branch
 MERGED12_R_IMG   = (224, 224)         # ResNet50V2 branch + EffNetB0 branch
+
+
+def _gdrive_download_from_id(file_id: str, dest_path: str, chunk_size: int = 1 << 20):
+    """
+    Minimal Google Drive downloader.
+    Works if the file is shared as 'Anyone with the link'.
+    """
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(dest_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+
+def ensure_weights_present():
+    """
+    Ensure all weight files exist in weights_local/.
+    Download from Google Drive if missing.
+    """
+    for fname, file_id in GDRIVE_FILES.items():
+        local_path = os.path.join(WEIGHTS_DIR, fname)
+        if os.path.exists(local_path) and os.path.getsize(local_path) > 0:
+            continue  # already here
+
+        print(f"[weights] Downloading {fname}...")
+        _gdrive_download_from_id(file_id, local_path)
+        print(f"[weights] Saved to {local_path}")
+
+# Run this before loading any models
+ensure_weights_present()
+
 
 # -----------------------------
 # 1) Custom layers for Kaggle model
