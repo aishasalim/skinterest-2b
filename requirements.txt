@@ -1,5 +1,5 @@
-# Linux/Windows
-tensorflow==2.20.0; not (platform_system == "Darwin" and platform_machine == "arm64")
+# Linux/Windows (anything that is NOT macOS on Apple silicon)
+tensorflow==2.20.0; platform_system != "Darwin" or platform_machine != "arm64"
 
 # macOS Apple Silicon
 tensorflow-macos==2.16.2; platform_system == "Darwin" and platform_machine == "arm64"
