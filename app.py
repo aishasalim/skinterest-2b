@@ -29,7 +29,7 @@ GDRIVE_FILES = {
     "kaggle_classifier_model.keras": "1QyK-mwjCw30g1gINNnn5srQiz4kEPZt3", 
     "merged12_xception_finetuned.keras": "1CL06tnH4X8ogJ1NXxx2wrRh1avX_ac9s", 
     "merged12_resnet50v2_finetuned.keras":"12Q9jz4Nkg_sgDdBLo3WptC1M-aV7R4Z8", 
-    "merged12_effnet_custom_finetuned.keras": "1SvThqmZpa34bEG0byX8bIEtL3TOkqwDU", 
+    "merged12_effnet_custom_finetuned.keras": "12Q9jz4Nkg_sgDdBLo3WptC1M-aV7R4Z8", 
     "undertone_classifier_model.keras": "19g4Yxw8UbmUkrzqDrIj8RhjHzba7-ht5", 
     "kaggle_label_classes.npy": "1niHVRZDezHX0ssxt2eFdoYKfn1UyOHbS", 
     "merged12_label_classes.npy": "115FixjBHgp9LylFwMlGWSumVEAwdielc", 
