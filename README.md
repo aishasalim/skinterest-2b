@@ -6,27 +6,31 @@
 
 ## 👥 Team Members
 
-| Name                    | GitHub               | Role / Contribution                                                            |
+| Name                    | GitHub Handle        | Role / Contribution                                                            |
 | ----------------------- | -------------------- | ------------------------------------------------------------------------------ |
 | **Aisha Salimgereyeva** | `@aishasalim`        | **ResNet-152V2** pipeline; training/eval scripts; Streamlit demo; docs         |
 | **Wanying Xu**          | `@OliviaCoding`      | **MobileNetV2/V3** baselines; EDA & visuals; documentation                     |
 | **Ayleen Jimenez**      | `@ayleenjim`         | **EfficientNet-B7** experiments; error analysis                                |
-| **Ruben Perez**         | `@RubPO4`            | **YOLO** lesion localization; dataset QA; detector→classifier pipeline         |
+| **Ruben Perez?**        | `@RubPO4`            | **YOLO** lesion localization; dataset QA; detector→classifier pipeline         |
 | **Hoang Do**            | `@hoangggdo`         | **MaxViT** experiments; augmentation/regularization ablations                  |
 | **Alexis Amadi**        | `@aalexis123`        | **ResNet50** baseline; optimization & speed profiling                          |
-| **Susan Qu**            | `@susan-q`           | **ResNet50** (regularization study: MixUp/CutMix, class-weights vs oversample) |
+| **Susan Qu**            | `@susan-q`           | **ResNet50** experiments; lighting and skin tone analysis                      |
 | **Nandini**             | `@albatrosspreacher` | Reviewer (Write access); PM support; meeting notes                             |
 
 ---
 
 ## 🎯 Project Highlights
 
-- Built a **multitask CNN** that predicts **(1) lighting quality** and **(2) skin condition** across **10 diagnostic classes** with **macro-average accuracy ≈ 0.75** and **overall test accuracy ≈ 0.80** on held-out data.
+- Developed a **multimodal CNN** by using various deep learning models(ResNet-152V2, MobileNetV2/V3, etc) in order to process and classify a wide range of skin conditions, such as Eczema/Atopic Dermatitis, Lupus, and Pigmentation disorders.
+- Achived a testing accuracy of **over 80%**, demonstrating that this model is suitable for image for AI analysis and directly contributing to Skinterest's goal of fostering inclusivity within the dermatology field.
+- Implemented **(1) lighting harshness** and **(2) skin undertones** analysis of the data so that the model is able to classify images with different lighting and color tones.
+- Created a **Streamlit demo** for qualitative testing and stakeholder feedback.
+  
+
 - Introduced a lightweight, trainable **Color Calibration Matrix (CCM)** layer and **center-crop preprocessing** to stabilize color/illumination across devices.
 - Implemented a **three-phase training schedule (A/B/C)** that improves generalization vs naïve full fine-tuning, with optional Phase D for targeted backbone unfreeze.
 - Added **fairness slices by skin-tone bucket** (ITA-based light/medium/dark) and **Grad-CAM** overlays to increase interpretability.
-- Shipped a **Streamlit demo** for qualitative testing and stakeholder feedback.
-
+  
 ---
 
 ## 👩🏽‍💻 Setup & Installation
@@ -81,7 +85,7 @@
 
 ### A) One-click (Google Colab)
 
-1. Open `notebooks/02_training_multitask.ipynb` in Colab.
+1. Open `scripts/aisha_resnet.ipynb` in Colab.
 2. Top cell installs:
 
    ```bash
