@@ -85,7 +85,7 @@
 
 ### A) One-click (Google Colab)
 
-1. Open `scripts/aisha_resnet.ipynb` in Colab.
+1. Open `notebooks/02_training_multitask.ipynb` in Colab.
 2. Top cell installs:
 
    ```bash
