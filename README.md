@@ -247,7 +247,7 @@ streamlit run app.py
 
 ## 💬 Discussion & Reflection
 
-**Summary**
+**Summary:**
 Our model can be highly susceptable to overfitting while training because of domain shifts and high variance in minority classes of the data due to class imbalance and subtle visual traits. It also sometimes struggles to differentiate Eczema and Psoriasis, likely due to visual overlap and labeling noise factors. Introducing external images outside of data set may also effect model accuracy; Grad-CAM helps audit failure modes.
 
 **What worked**
@@ -274,7 +274,7 @@ Our model can be highly susceptable to overfitting while training because of dom
 **Procedural:** With more time and resources, we may consider other project approach options such as having the team focus on one project step and one model at a time rather than all at once. This may encourage even more teamwork and learning opportunities.
 Some additional data we may want to emplore are additional skin images from either the company or online to increase our dataset size fix imbalances in the data. We may even want to add images of normal skin of different lighting.
 
-**Technical** 
+**Technical:** 
 1. **Detector→Classifier**: Use YOLO lesion crops instead of global center-crop.
 2. **Calibration**: Temperature scaling / Dirichlet calibration for better confidence estimates.
 3. **Data curation**: Add cleaner eczema/psoriasis samples; augment under-represented tones.
