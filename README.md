@@ -9,7 +9,7 @@
 | Name                    | GitHub Handle        | Role / Contribution                                                            |
 | ----------------------- | -------------------- | ------------------------------------------------------------------------------ |
 | **Aisha Salimgereyeva** | `@aishasalim`        | **ResNet-152V2** pipeline; training/eval scripts; Streamlit demo; docs         |
-| **Wanying Xu**          | `@OliviaCoding`      | **MobileNetV2/V3** baselines; EDA & visuals; documentation                     |
+| **Wanying Xu**          | `@OliviaCoding`      | **MobileNetV3** baselines; EDA & visuals; documentation                     |
 | **Ayleen Jimenez**      | `@ayleenjim`         | **EfficientNet-B7** experiments; error analysis                                |
 | **Hoang Do**            | `@hoangggdo`         | **MaxViT** experiments; augmentation/regularization ablations                  |
 | **Alexis Amadi**        | `@aalexis123`        | **ResNet50** baseline; optimization & speed profiling                          |
@@ -20,7 +20,7 @@
 
 ## 🎯 Project Highlights
 
-- Developed a **multimodal CNN** by using various deep learning models(ResNet-152V2, MobileNetV2/V3, etc) in order to process and classify a wide range of skin conditions, such as Eczema/Atopic Dermatitis, Lupus, and Pigmentation disorders.
+- Developed a **multimodal CNN** by using various deep learning models(ResNet-152V2, MobileNetV3, etc) in order to process and classify a wide range of skin conditions, such as Eczema/Atopic Dermatitis, Lupus, and Pigmentation disorders.
 - Achived a testing accuracy of **over 80%**, demonstrating that this model is suitable for image for AI analysis and directly contributing to Skinterest's goal of fostering inclusivity within the dermatology field.
 - Implemented **(1) lighting harshness** and **(2) skin undertones** analysis of the data so that the model is able to classify images with different lighting and color tones.
 - Created a **Streamlit demo** for qualitative testing and stakeholder feedback.
