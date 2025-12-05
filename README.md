@@ -26,6 +26,139 @@
 - Created a **Streamlit demo** for qualitative testing and stakeholder feedback.
   
 ---
+# 👩🏽‍💻 Setup & Installation
+
+## Prerequisites
+- **Python:** 3.9–3.11  
+- **(Recommended)** GPU runtime for training (Colab T4/A100 or local NVIDIA)  
+- **Kaggle API credentials** (for Kaggle dataset download)
+
+---
+
+## Repo layout + outputs
+
+```text
+.
+├── app.py
+├── requirements.txt
+├── configs/
+│   └── resnet152v2_baseline.yaml
+├── experiments/                 # auto-created: one folder per run (small text+png only)
+│   └── <run_name>/
+│       ├── report.json
+│       ├── metrics.csv          # optional training history
+│       ├── weights.txt          # how to fetch large .keras/.h5 from cloud storage
+│       └── figures/             # optional PNGs (cm, grad-cam, slice metrics, etc.)
+├── notebooks/
+│   └── aisha/
+│       ├── 01_eda_scins_kaggle.ipynb
+│       ├── 02_training_multitask_resnet152v2.ipynb
+│       └── 03_error_analysis_fairness.ipynb
+├── scripts/
+│   ├── prepare_kaggle_meta.py   # builds meta CSV with labels + lighting + ITA
+│   └── train_abc.py             # trains Phase A/B/C from a config
+└── src/
+    └── ... (data / layers / models / training / eval / utils)
+```
+
+### Outputs contract (important)
+- Training + evaluation artifacts should go to `experiments/<run_name>/`
+- Large model binaries (`.keras`, `.h5`) should **NOT** be committed; store externally and put the download command/link in `experiments/<run_name>/weights.txt`
+
+---
+
+## Quickstart (choose one)
+
+### A) One-click (Google Colab)
+
+1. Open: `notebooks/aisha/02_training_multitask_resnet152v2.ipynb` in Colab.
+2. Install dependencies (top cell):
+
+   ```bash
+   !pip -q install kaggle==1.6.17 tensorflow==2.20.0 tensorflow-addons==0.23.0 opencv-python==4.10.0.84
+   ```
+
+3. Kaggle credentials:
+   - Upload `kaggle.json` to `/root/.kaggle/kaggle.json`
+   - Set permissions:
+
+     ```bash
+     !chmod 600 /root/.kaggle/kaggle.json
+     ```
+
+4. Run the notebook cells to:
+   - Download dataset(s)
+   - Generate metadata (lighting + ITA)
+   - Train Phase A/B/C
+   - Write artifacts into `experiments/<run_name>/`
+
+**Expected outputs (example):**
+- `experiments/<run_name>/report.json`
+- `experiments/<run_name>/metrics.csv` *(optional)*
+- `experiments/<run_name>/weights.txt` *(download instructions for `.keras/.h5`)*
+- `experiments/<run_name>/figures/*.png` *(optional)*
+
+> Note: If you currently save figures to `docs/figures/`, consider redirecting them into `experiments/<run_name>/figures/` so every run is self-contained.
+
+---
+
+### B) Local (macOS, Apple Silicon)
+
+> Tested on Python **3.9–3.11**.
+
+Create venv + install:
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install --upgrade pip wheel
+pip install -r requirements.txt
+```
+
+If you use TensorFlow on Apple Silicon (recommended pins):
+
+```bash
+pip install tensorflow-macos==2.16.1 tensorflow-metal==1.1.0 keras==3.3.3
+```
+
+Train from config (recommended reproducible entrypoint):
+
+```bash
+python scripts/train_abc.py --config configs/resnet152v2_baseline.yaml --run_name resnet152v2_baseline_seed42 --seed 42
+```
+
+Run the demo:
+
+```bash
+streamlit run app.py
+```
+
+> If you see model deserialization issues, make sure custom layer class names (e.g., `ColorCalibration`, `ResNetV2Preprocess`) are imported and **match exactly** what was used during training.
+
+---
+
+## Data access & expected layout
+
+### SCIN (Google Research)
+- Follow the official SCIN access instructions (see References).
+- Recommended: place SCIN under `data/scin/` *(not committed).*
+
+### Kaggle dataset (e.g., “Skin Diseases Image Dataset”)
+Download via Kaggle CLI (example):
+
+```bash
+kaggle datasets download -d <kaggle-dataset-slug> -p data/kaggle --unzip
+```
+
+### Metadata generation (lighting + ITA)
+Create metadata CSV used by `tf.data` pipelines:
+
+```bash
+python scripts/prepare_kaggle_meta.py --input_dir data/kaggle --out_csv data/meta/kaggle_meta.csv
+```
+
+> Ensure your training config / notebook points to the generated `meta.csv` path.
+
+---
 
 ## 👩🏽‍💻 Setup & Installation
 
