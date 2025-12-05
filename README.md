@@ -11,7 +11,6 @@
 | **Aisha Salimgereyeva** | `@aishasalim`        | **ResNet-152V2** pipeline; training/eval scripts; Streamlit demo; docs         |
 | **Wanying Xu**          | `@OliviaCoding`      | **MobileNetV2/V3** baselines; EDA & visuals; documentation                     |
 | **Ayleen Jimenez**      | `@ayleenjim`         | **EfficientNet-B7** experiments; error analysis                                |
-| **Ruben Perez?**        | `@RubPO4`            | **YOLO** lesion localization; dataset QA; detector→classifier pipeline         |
 | **Hoang Do**            | `@hoangggdo`         | **MaxViT** experiments; augmentation/regularization ablations                  |
 | **Alexis Amadi**        | `@aalexis123`        | **ResNet50** baseline; optimization & speed profiling                          |
 | **Susan Qu**            | `@susan-q`           | **ResNet50** experiments; lighting and skin tone analysis                      |
@@ -25,11 +24,6 @@
 - Achived a testing accuracy of **over 80%**, demonstrating that this model is suitable for image for AI analysis and directly contributing to Skinterest's goal of fostering inclusivity within the dermatology field.
 - Implemented **(1) lighting harshness** and **(2) skin undertones** analysis of the data so that the model is able to classify images with different lighting and color tones.
 - Created a **Streamlit demo** for qualitative testing and stakeholder feedback.
-  
-
-- Introduced a lightweight, trainable **Color Calibration Matrix (CCM)** layer and **center-crop preprocessing** to stabilize color/illumination across devices.
-- Implemented a **three-phase training schedule (A/B/C)** that improves generalization vs naïve full fine-tuning, with optional Phase D for targeted backbone unfreeze.
-- Added **fairness slices by skin-tone bucket** (ITA-based light/medium/dark) and **Grad-CAM** overlays to increase interpretability.
   
 ---
 
@@ -129,19 +123,12 @@ streamlit run app.py
 ---
 
 ## 🏗️ Project Overview
-
+**About the Program:**
 * The Break Through Tech AI program is an experiential learning opportunity that allows students to gain **hands-on technical experience** in the competitive AI/ML industry. This program connected us to our project's challenge advisors from Skinterest Tech and through this program, we learned how to work as a team, **preprocess and clean data, train AI models**, and **fine-tune parameters** for better results. These learned skills set us apart from other applicants when applying to jobs.
+**Our Goals, Objectives, and the Company:**
 * Skinterest Tech is a **skincare startup** whose goal is to **diversify skincare** and help patients find the right product based on their skin quality, texture, tone, and more. The objective our AI Studio project with Skinterest Tech is to develop a **reliable and usable machine learning model** that detects poor lighting and classifies images of **common dermatologic conditions** across **diverse** skin tones, to be used for clinical review.
+**Business Relevance:**
 * The problem that our machine learning model solves is significant because training data used by today's dermatology industry is often heavily skewed toward lighter skin tones, **neglecting representation for people with darker complexions**. This issue can impact skin condition diagnosis and product awareness. Skin condition diagnosis on people with deeper skin tones may be incorrectly classified and patients may be recommended unnecessary, or even harmful products. Our model specifically addresses this by **accounting for various skin tones and image lighting** of their pictures.
-
-
-
-
-**Program:** Break Through Tech AI Studio × **Skinterest Tech**
-**Objective:** B
-**Business relevance:** Clinicians and tele-dermatology workflows benefit from early triage and photo-quality checks. Lighting feedback and interpretable predictions reduce re-captures and support equitable performance across skin tones.
-
-AI Studio is an immersive experiential learning opportunity that provides you with real-world project experience and a valuable resume credential while you  simultaneously learn, apply, reflect upon, and master key leadership and professional skills that will not only help you achieve your project milestones but also accelerate you on a path toward meaningful careers in technical roles across industries. This course will prepare you for the increasingly competitive AI/ML job marketplace and differentiate you from other candidates in the applicant field. 
 
 ---
 
@@ -196,31 +183,6 @@ AI Studio is an immersive experiential learning opportunity that provides you wi
 
 ---
 
-## 🧩 Code Highlights
-
-- `src/model_multitask.py`
-
-  - `ColorCalibration`: learnable 3×3 color transform + bias with L2 prior to identity.
-  - `build_multitask(backbone=..., drop_rate=...)`: returns Keras model with two heads.
-
-- `src/data_prep.py`
-
-  - ITA computation + simple skin mask; metadata CSV; stratified splits; `tf.data` pipelines with center-crop and augmentations.
-
-- `src/train.py`
-
-  - Implements Phases A/B/C; class-weights; callbacks (ModelCheckpoint, EarlyStopping, ReduceLROnPlateau).
-
-- `src/eval.py`
-
-  - Confusion matrix, per-class tables, fairness slices, and Grad-CAM utilities.
-
-- `app.py`
-
-  - Streamlit demo; loads `.keras` with custom layers; top-k predictions; optional Grad-CAM.
-
----
-
 ## 📈 Results & Key Findings
 
 > Numbers below are from a representative **ResNet-152V2 + CCM** run (Phases A/B/C), single seed 42.
@@ -257,120 +219,33 @@ AI Studio is an immersive experiential learning opportunity that provides you wi
 
 ---
 
-## 💬 Discussion & Reflection
-
-**What worked**
-
-- Multitask formulation stabilized training and improved robustness to lighting.
-- Lightweight CCM provided consistent gains with negligible compute cost.
-- Clear phase schedule (A/B/C) improved convergence and prevented catastrophic forgetting.
-
-**What didn’t**
-
-- Phase D full unfreeze frequently **overfit** (val↓ while train↑).
-- Eczema/Psoriasis remain challenging—visual overlap + labeling noise likely factors.
-- External images (distribution shift) can degrade accuracy; Grad-CAM helps audit failure modes.
-
-**Why**
-
-- Class imbalance + subtle visual traits → higher variance in minority classes.
-- Domain shift (camera, distance, compression) → emphasize data standardization at inference.
-
----
-
 ## 🚀 Next Steps
 
-1. **Detector→Classifier**: Use YOLO lesion crops instead of global center-crop.
-2. **Calibration**: Temperature scaling / Dirichlet calibration for better confidence estimates.
-3. **Data curation**: Add cleaner eczema/psoriasis samples; augment under-represented tones.
-4. **Fairness**: Track per-tone **ECE** and per-class **macro-F1**; evaluate with bootstrapped CIs.
-5. **Light-quality feedback**: Turn lighting head into a user tip (“move closer”, “avoid flash glare”).
-6. **Distillation**: Compress best model to MobileNetV3-Small for on-device triage.
+Our model can be highly susceptable to overfitting while training because of domain shifts and high variance in minority classes of the data due to class imbalance and subtle visual traits. It also sometimes struggles to differentiate Eczema and Psoriasis, likely due to visual overlap and labeling noise factors. Introducing external images outside of data set may also effect model accuracy; Grad-CAM helps audit failure modes.
 
----
-
-## 🔧 How to Reproduce
-
-### Train (notebook)
-
-- Open `notebooks/02_training_multitask.ipynb` → run **Install**, **Data Prep**, then **Phases A/B/C**.
-
-### Train (CLI)
-
-```bash
-python -m src.train \
-  --config experiments/resnet152v2/baseline/config.yaml \
-  --outdir artifacts/resnet152v2/baseline/
-```
-
-### Evaluate
-
-```bash
-python -m src.eval \
-  --model artifacts/resnet152v2/baseline/resnet152v2_full_model.keras \
-  --test_csv data/test.csv \
-  --out docs/figures/
-```
-
-### Streamlit Demo
-
-```bash
-streamlit run app.py
-```
-
-> `app.py` expects the saved model at `artifacts/resnet152v2_full_model.keras` and a `demo/class_index.json` mapping.
-
----
-
-## 📊 Shared Comparison Table (fill as experiments land)
-
-| Model             | Owner   | Params (M) | Val Acc | Test Acc | Macro Acc | Lighting Acc | Light |  Med | Dark | Notes             |
-| ----------------- | ------- | ---------: | ------: | -------: | --------: | -----------: | ----: | ---: | ---: | ----------------- |
-| ResNet152V2 + CCM | Aisha   |       58.9 |    0.79 |     0.80 |      0.75 |         0.86 |  0.82 | 0.71 | 0.86 | class-weights     |
-| MobileNetV3-L     | Wanying |          … |       … |        … |         … |            … |     … |    … |    … | MixUp ablation    |
-| EfficientNet-B7   | Ayleen  |          … |       … |        … |         … |            … |     … |    … |    … | 380px input       |
-| ResNet50          | Alexis  |          … |       … |        … |         … |            … |     … |    … |    … | smoothing sweep   |
-| ResNet50 (reg)    | Susan   |          … |       … |        … |         … |            … |     … |    … |    … | CutMix vs weights |
-| MaxViT-T/S        | Hoang   |          … |       … |        … |         … |            … |     … |    … |    … | RandAug ablation  |
-| YOLO→Classifier   | Ruben   |          — |       — |        — |         — |            — |     — |    — |    — | lesion crops      |
-
----
-
-## 📁 Sample Data & Notebooks
-
-- `data/sample_images/` — 5–10 de-identified images to sanity-check the demo.
-- `notebooks/01_data_exploration.ipynb` — EDA & ITA distribution plots.
-- `notebooks/02_training_multitask.ipynb` — full training script with Kaggle download cells.
-- `notebooks/03_error_analysis_fairness.ipynb` — Grad-CAM + fairness slices.
+With more time and resources, we may consider other project approach options such as having the team focus on one project step and one model at a time rather than all at once. This may encourage even more teamwork and learning opportunities.
+Some additional data we may want to emplore are additional skin images from either the company or online to increase our dataset size fix imbalances in the data. We may even want to add images of normal skin of different lighting.
 
 ---
 
 ## 📝 License
 
-**MIT License** — see `LICENSE` file. If your organization requires a different license, update this section accordingly.
+This project is licensed under the MIT License.
 
 ---
 
 ## 📄 References
 
-- **SCIN: A New Resource for Representative Dermatology Images** — Google Research (dataset + blog + GitHub).
-- **Kaggle: Skin Diseases Image Dataset** by _ismailpromus_.
-- **He et al. (2016)**: Deep Residual Learning for Image Recognition (ResNet).
-- **Tan & Le (2019)**: EfficientNet.
-- **Howard et al. (2019/2020)**: MobileNetV2/V3.
-- **Tu et al. (2022)**: MaxViT.
-- **Grad-CAM**: Selvaraju et al. (2017).
+* **SCIN: A New Resource for Representative Dermatology Images** (Dataset, Blog, and GitHub provided by Google Research).
+* **Kaggle: Skin Diseases Image Dataset** by _ismailpromus_.
+* **Deep Residual Learning for Image Recognition** (ResNet) - He et al. (2016).
+* **EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks** - Tan & Le (2019).
+* **MobileNetV2/V3: Searching for MobileNetV3** - Howard et al. (2019/2020).
+* **MaxViT: Multi-Axis Attention for Vision Transformers** - Tu et al. (2022).
+* **Skin Tone Representation in Dermatologist Social Media Accounts** - Paradkar & Kaffenberger (2022).
 
 ---
 
-## ✅ Contribution Workflow
+## 🙏 **Acknowledgements**
 
-- **Branch:** `exp/<model>/<owner>/<run-id>` (e.g., `exp/resnet152v2/aisha/baseline-v1`)
-- **PR template** includes: config file, results JSON, figures, and a short discussion of failures.
-- **CI (optional):** lint, unit tests for data/metrics utilities.
-
----
-
-## 📌 Notes for Reviewers / TAs
-
-- All rubric items are covered: clear **title**, full **team & roles**, **highlights**, reproducible **setup**, **overview + business relevance**, **data description + preprocessing**, **EDA insights**, **model justification & architecture**, **code highlights**, **results & metrics**, **discussion**, **next steps**, **license**, and professional markdown formatting.
+Many thanks to our Skinterest Tech challenge advisors Ashley Abid and Thandiwe-Kesi Robins and Break Through Tech Coach Nandini Proothi for guiding us and answering our questions!
