@@ -183,6 +183,31 @@ streamlit run app.py
 
 ---
 
+## 🧩 Code Highlights
+
+- `src/model_multitask.py`
+
+  - `ColorCalibration`: learnable 3×3 color transform + bias with L2 prior to identity.
+  - `build_multitask(backbone=..., drop_rate=...)`: returns Keras model with two heads.
+
+- `src/data_prep.py`
+
+  - ITA computation + simple skin mask; metadata CSV; stratified splits; `tf.data` pipelines with center-crop and augmentations.
+
+- `src/train.py`
+
+  - Implements Phases A/B/C; class-weights; callbacks (ModelCheckpoint, EarlyStopping, ReduceLROnPlateau).
+
+- `src/eval.py`
+
+  - Confusion matrix, per-class tables, fairness slices, and Grad-CAM utilities.
+
+- `app.py`
+
+  - Streamlit demo; loads `.keras` with custom layers; top-k predictions; optional Grad-CAM.
+
+---
+
 ## 📈 Results & Key Findings
 
 > Numbers below are from a representative **ResNet-152V2 + CCM** run (Phases A/B/C), single seed 42.
@@ -217,14 +242,45 @@ streamlit run app.py
 - **Class-weights** outperform heavy oversampling for generalization.
 - **Full unfreeze (Phase D)** risks overfitting unless combined with stronger regularization and early stopping.
 
+
+---
+
+## 💬 Discussion & Reflection
+
+**Summary**
+Our model can be highly susceptable to overfitting while training because of domain shifts and high variance in minority classes of the data due to class imbalance and subtle visual traits. It also sometimes struggles to differentiate Eczema and Psoriasis, likely due to visual overlap and labeling noise factors. Introducing external images outside of data set may also effect model accuracy; Grad-CAM helps audit failure modes.
+
+**What worked**
+
+- Multitask formulation stabilized training and improved robustness to lighting.
+- Lightweight CCM provided consistent gains with negligible compute cost.
+- Clear phase schedule (A/B/C) improved convergence and prevented catastrophic forgetting.
+
+**What didn’t**
+
+- Phase D full unfreeze frequently **overfit** (val↓ while train↑).
+- Eczema/Psoriasis remain challenging—visual overlap + labeling noise likely factors.
+- External images (distribution shift) can degrade accuracy; Grad-CAM helps audit failure modes.
+
+**Why**
+
+- Class imbalance + subtle visual traits → higher variance in minority classes.
+- Domain shift (camera, distance, compression) → emphasize data standardization at inference.
+
 ---
 
 ## 🚀 Next Steps
 
-Our model can be highly susceptable to overfitting while training because of domain shifts and high variance in minority classes of the data due to class imbalance and subtle visual traits. It also sometimes struggles to differentiate Eczema and Psoriasis, likely due to visual overlap and labeling noise factors. Introducing external images outside of data set may also effect model accuracy; Grad-CAM helps audit failure modes.
-
-With more time and resources, we may consider other project approach options such as having the team focus on one project step and one model at a time rather than all at once. This may encourage even more teamwork and learning opportunities.
+**Procedural:** With more time and resources, we may consider other project approach options such as having the team focus on one project step and one model at a time rather than all at once. This may encourage even more teamwork and learning opportunities.
 Some additional data we may want to emplore are additional skin images from either the company or online to increase our dataset size fix imbalances in the data. We may even want to add images of normal skin of different lighting.
+
+**Technical** 
+1. **Detector→Classifier**: Use YOLO lesion crops instead of global center-crop.
+2. **Calibration**: Temperature scaling / Dirichlet calibration for better confidence estimates.
+3. **Data curation**: Add cleaner eczema/psoriasis samples; augment under-represented tones.
+4. **Fairness**: Track per-tone **ECE** and per-class **macro-F1**; evaluate with bootstrapped CIs.
+5. **Light-quality feedback**: Turn lighting head into a user tip (“move closer”, “avoid flash glare”).
+6. **Distillation**: Compress best model to MobileNetV3-Small for on-device triage.
 
 ---
 
