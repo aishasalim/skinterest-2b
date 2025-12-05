@@ -130,9 +130,18 @@ streamlit run app.py
 
 ## 🏗️ Project Overview
 
+* The Break Through Tech AI program is an experiential learning opportunity that allows students to gain **hands-on technical experience** in the competitive AI/ML industry. This program connected us to our project's challenge advisors from Skinterest Tech and through this program, we learned how to work as a team, **preprocess and clean data, train AI models**, and **fine-tune parameters** for better results. These learned skills set us apart from other applicants when applying to jobs.
+* Skinterest Tech is a **skincare startup** whose goal is to **diversify skincare** and help patients find the right product based on their skin quality, texture, tone, and more. The objective our AI Studio project with Skinterest Tech is to develop a **reliable and usable machine learning model** that detects poor lighting and classifies images of **common dermatologic conditions** across **diverse** skin tones, to be used for clinical review.
+* The problem that our machine learning model solves is significant because training data used by today's dermatology industry is often heavily skewed toward lighter skin tones, **neglecting representation for people with darker complexions**. This issue can impact skin condition diagnosis and product awareness. Skin condition diagnosis on people with deeper skin tones may be incorrectly classified and patients may be recommended unnecessary, or even harmful products. Our model specifically addresses this by **accounting for various skin tones and image lighting** of their pictures.
+
+
+
+
 **Program:** Break Through Tech AI Studio × **Skinterest Tech**
-**Objective:** Build a reliable, explainable model that (a) detects **poor lighting** and (b) classifies **common dermatologic conditions** across diverse skin tones, producing calibrated evidence for clinical review.
+**Objective:** B
 **Business relevance:** Clinicians and tele-dermatology workflows benefit from early triage and photo-quality checks. Lighting feedback and interpretable predictions reduce re-captures and support equitable performance across skin tones.
+
+AI Studio is an immersive experiential learning opportunity that provides you with real-world project experience and a valuable resume credential while you  simultaneously learn, apply, reflect upon, and master key leadership and professional skills that will not only help you achieve your project milestones but also accelerate you on a path toward meaningful careers in technical roles across industries. This course will prepare you for the increasingly competitive AI/ML job marketplace and differentiate you from other candidates in the applicant field. 
 
 ---
 
